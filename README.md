@@ -30,7 +30,7 @@ Idea → Spec → Design → Implementation → Test → Benchmark → Iteration
     cmake --build build
     ctest --test-dir build --output-on-failure
 
-当前环境如果尚未安装 CMake，可使用可用的 C++20 编译器手动编译 Phase 1 smoke test；结果会记录在 AI_LOG.md。
+当前已安装 CMake 4.4.4。项目配置还需要 Ninja 或 MinGW Make 生成器；在生成器就绪前，可使用可用的 C++20 编译器手动编译 Phase 1 smoke test。
 
 ## 当前状态
 

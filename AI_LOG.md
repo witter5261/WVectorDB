@@ -42,8 +42,8 @@ Spec 和 Design 的核心方向一致，已具备进入 Phase 1 骨架的条件�
 
 ### 验证
 
-- 当前环境未发现 CMake 命令，因此无法运行 CMake configure/build/CTest。
-- 已使用 g++ 16.1.0 和 C++20 手动构建并运行 smoke test，输出为 Phase 1 smoke test passed。
+- 已安装 CMake 4.4.4 到 C:/Users/22117/Documents/Codex/tools/cmake-4.4.4/bin/cmake.exe，并加入当前用户 PATH。
+- 已使用 g++ 16.1.0 和 C++20 手动构建并运行 smoke test，输出为 Phase 1 smoke test passed。\n- CMake 配置尝试因系统缺少 MinGW Makefiles 所需的 make/ninja 生成器而停止；CMake 本身已可执行。
 - 首次编译发现头文件与实现的 noexcept 声明不一致，已统一后重新编译通过。\n- 尚未实现 insert、erase、search，也没有宣称 MVP 完成。
 
 ### 下一步
