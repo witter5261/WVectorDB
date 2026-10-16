@@ -2,7 +2,7 @@
 
 A minimal vector database built from scratch for learning AI engineering.
 
-当前仓库处于 **Phase 0：规格与设计审查**。此阶段先把需求、设计和协作规则写清楚，暂不实现核心 C++ 代码。
+当前仓库处于 **Phase 1：可编译骨架**。Phase 0 的规格审查已完成，当前只验证 C++ 类型、CMake 目标和 smoke test，不实现完整的向量插入、删除或搜索。
 
 ## 项目路线
 
@@ -20,12 +20,21 @@ Idea → Spec → Design → Implementation → Test → Benchmark → Iteration
     src/         实现代码
     tests/       功能与回归测试
     benchmark/   基准程序、数据和结果
+    build/       本地构建输出，不提交到 Git
 
-目录中的 .gitkeep 只是为了让空目录进入 Git；开始实现后会被实际文件替换。
+## 构建与测试
+
+在安装 CMake 3.20 或更高版本后：
+
+    cmake -S . -B build
+    cmake --build build
+    ctest --test-dir build --output-on-failure
+
+当前环境如果尚未安装 CMake，可使用可用的 C++20 编译器手动编译 Phase 1 smoke test；结果会记录在 AI_LOG.md。
 
 ## 当前状态
 
 - GitHub：witter5261/WVectorDB
 - 分支：main
-- 当前阶段：Phase 0，等待 Codex 审查 SPEC.md 和 DESIGN.md
-- 核心实现：尚未开始
+- 当前阶段：Phase 1，可编译骨架
+- 核心 MVP 实现：尚未开始

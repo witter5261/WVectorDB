@@ -1,22 +1,25 @@
 # TODO
 
-## Phase 0：规格与设计审查（当前）
+## Phase 0：规格与设计审查
 
 - [x] 创建项目规范、设计、协作规则、AI 日志和任务清单
 - [x] 建立 src/、include/、tests/、benchmark/ 目录骨架
 - [x] 写明 MVP 范围、非目标、错误边界和验收标准
-- [ ] 让 Codex 审查 SPEC.md，列出歧义和必须决策的问题
-- [ ] 让 Codex 审查 DESIGN.md，检查模块边界、数据结构和复杂度
-- [ ] 决定 C++ 标准、CMake 版本和测试框架
-- [ ] 决定错误表达方式、删除策略和 benchmark 输出格式
-- [ ] 将审查结论写回 SPEC.md、DESIGN.md、AI_LOG.md
+- [x] 审查 SPEC.md，列出歧义并完成决策
+- [x] 审查 DESIGN.md，确认模块边界、数据结构和复杂度
+- [x] 决定 C++ 标准、CMake 版本和测试框架
+- [x] 决定错误表达方式、删除策略和 benchmark 输出格式
+- [x] 将审查结论写回 SPEC.md、DESIGN.md、AI_LOG.md
 
-## Phase 1：可编译骨架
+## Phase 1：可编译骨架（当前）
 
-- [ ] 增加最小构建文件
-- [ ] 增加公共类型和空的 Collection 接口
-- [ ] 增加最小构建/测试入口
-- [ ] 验证构建命令并记录环境
+- [x] 增加 CMakeLists.txt
+- [x] 增加公共类型和 Collection 骨架接口
+- [x] 增加无第三方依赖的 smoke test 和 CTest 入口
+- [x] 增加 build 输出的 .gitignore
+- [x] 使用可用 C++20 编译器手动构建并运行 smoke test
+- [ ] 安装或提供 CMake 3.20+ 后运行 CMake configure/build/CTest
+- [x] 将手动构建和 smoke test 结果补充到 AI_LOG.md
 
 ## Phase 2：生命周期与校验
 
