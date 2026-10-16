@@ -19,7 +19,8 @@
 - [x] 增加 build 输出的 .gitignore
 - [x] 使用可用 C++20 编译器手动构建并运行 smoke test
 - [x] 安装 CMake 3.20+（当前为 4.4.4）
-- [x] 将手动构建和 smoke test 结果补充到 AI_LOG.md\n- [ ] 安装 Ninja 或 MinGW Make 后运行 CMake configure/build/CTest
+- [x] 将手动构建和 smoke test 结果补充到 AI_LOG.md
+- [ ] 安装 Ninja 或 MinGW Make 后运行 CMake configure/build/CTest
 
 ## Phase 2：生命周期与校验
 
