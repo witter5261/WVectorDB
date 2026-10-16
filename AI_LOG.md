@@ -4,7 +4,7 @@
 
 ### 已确认
 
-- 本地仓库为 C:/Users/22117/Desktop/AI-Projects/WVectorDB。
+- 本地仓库为 C:/Users/22117/Desktop/WVectorDB。
 - Git 分支为 main，远程为 https://github.com/witter5261/WVectorDB.git。
 - 项目目标是从零实现一个用于学习 AI 工程的简化 Vector Database。
 - 当前先建立 Idea → Spec → Design → Implementation → Test → Benchmark 的工作流。
