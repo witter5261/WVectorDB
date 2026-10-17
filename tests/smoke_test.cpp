@@ -2,6 +2,7 @@
 #include "wvectordb/types.hpp"
 
 #include <cmath>
+#include <cstdlib>
 #include <iostream>
 #include <limits>
 #include <stdexcept>
@@ -58,10 +59,29 @@ int main() {
         [&] { collection.insert(11, {1.0F, 2.0F}); },
         "wrong vector dimension was accepted");
     if (collection.size() != 2) {
-        std::cerr << "failed insert changed size\n";
+        std::cerr << "failed new insert changed size\n";
         return 1;
     }
 
+    expect_invalid_argument(
+        [&] { collection.insert(0, {1.0F, 2.0F}); },
+        "wrong dimension was accepted for an existing ID");
+    if (collection.size() != 2) {
+        std::cerr << "failed replacement changed size\n";
+        return 1;
+    }
+
+    collection.insert(11, {10.0F, 11.0F, 12.0F});
+    if (collection.size() != 3) {
+        std::cerr << "a failed new insert left a stale ID mapping\n";
+        return 1;
+    }
+
+    collection.insert(0, {13.0F, 14.0F, 15.0F});
+    if (collection.size() != 3) {
+        std::cerr << "a failed replacement lost the existing ID mapping\n";
+        return 1;
+    }
     expect_invalid_argument(
         [&] {
             collection.insert(
@@ -69,7 +89,7 @@ int main() {
                 {1.0F, std::numeric_limits<float>::quiet_NaN(), 3.0F});
         },
         "NaN vector value was accepted");
-    if (collection.size() != 2) {
+    if (collection.size() != 3) {
         std::cerr << "non-finite insert changed size\n";
         return 1;
     }

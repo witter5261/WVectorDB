@@ -24,27 +24,32 @@ std::size_t Collection::size() const noexcept {
 void Collection::insert(VectorId id, const Vector& vector) {
     validate_vector(vector);
 
+    // Copy before changing either container. A copy failure leaves the
+    // Collection untouched.
+    Vector prepared_vector = vector;
     const auto existing = positions_.find(id);
+
     if (existing != positions_.end()) {
-        Vector replacement = vector;
-        records_[existing->second].vector = std::move(replacement);
+        // std::vector<float>'s move assignment is noexcept with its default
+        // allocator, so the prepared value can replace the old value safely.
+        records_[existing->second].vector = std::move(prepared_vector);
         return;
     }
 
     const std::size_t new_index = records_.size();
-    records_.push_back(Record{id, vector});
+    records_.push_back(Record{id, std::move(prepared_vector)});
 
     try {
         const auto [iterator, inserted] = positions_.emplace(id, new_index);
         static_cast<void>(iterator);
         if (!inserted) {
-            records_.pop_back();
             throw std::logic_error("vector ID index insertion failed");
         }
     } catch (...) {
-        if (records_.size() > new_index) {
-            records_.pop_back();
-        }
+        // Exactly one record was appended in this call. The map either has
+        // no new entry or the standard insertion operation has completed.
+        // On failure, remove the appended record and rethrow the error.
+        records_.pop_back();
         throw;
     }
 }

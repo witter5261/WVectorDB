@@ -96,6 +96,7 @@ Phase 2 已加入 insert；erase 将在本阶段后续小步加入，search 留�
 - 不存在的删除使用布尔返回值。
 - 内存分配等系统异常不吞掉。
 - Collection 拥有自己的向量副本；调用方可以在 insert 返回后修改原 Vector。
+- insert 先准备完整 Vector 副本，再修改 records_ 或 positions_；复制失败不会修改 Collection。
 - 插入失败不修改已有记录。
 - MVP 不提供线程安全保证。
 

@@ -73,3 +73,29 @@ Spec 和 Design 的核心方向一致，已具备进入 Phase 1 骨架的条件�
 ### 学习重点
 
 这一步先验证数据结构不变量，再继续增加删除和搜索。后续删除会展示“物理位置不稳定”和“索引必须同步更新”的取舍。
+## 2026-10-17 — insert 异常安全审查
+
+### 现有代码的失败路径
+
+- 新 ID 的 records_.push_back 先于 positions_.emplace；向量复制或 records_ 扩容失败时，标准 vector 操作保持原状态。
+- positions_.emplace 分配失败时，标准 unordered_map 插入没有效果；原 catch 会移除刚追加的 Record，因此两个容器可以恢复一致。
+- 已有 ID 会先复制 replacement；复制失败时旧 Record 不变。当前 Vector 是 std::vector<float>，默认分配器下的移动赋值不会抛异常。
+- 当前代码不存在“positions_.emplace 成功后再向量赋值”的执行路径。原 catch 中 inserted == false 时先 pop、随后再进入 catch 检查，逻辑重复。
+
+### 修改
+
+- insert 现在先把输入复制到 prepared_vector。
+- 已有 ID 直接移动 prepared_vector 替换旧向量。
+- 新 ID 把 prepared_vector 移入 records_，再写 positions_。
+- positions_ 写入失败时只回滚本次追加的 Record，并重新抛出原异常。
+
+### 验证
+
+- 新增失败新 ID 后再次插入的测试，确认没有残留 ID 映射。
+- 新增失败已有 ID 后再次覆盖的测试，确认已有映射仍可用。
+- g++ 16.1.0、C++20、-Wall -Wextra -Wpedantic 编译通过。
+- 输出：Phase 2 insert test passed。
+
+### 局限
+
+当前 Vector 固定为 std::vector<float>，测试无法稳定注入内存分配异常；因此本次测试验证了可控的校验失败和后续状态可用性，容器分配异常依赖标准库的异常保证和代码结构。
