@@ -166,6 +166,14 @@ int main() {
         return 1;
     }
 
+    const auto exact_all_results = search_collection.search({0.0F, 0.0F}, 5);
+    if (exact_all_results.size() != 5 ||
+        exact_all_results[4].id != 200 ||
+        exact_all_results[4].distance != 25.0F) {
+        std::cerr << "k equal to collection size was handled incorrectly\n";
+        return 1;
+    }
+
     wvectordb::Collection empty_search_collection(2);
     if (!empty_search_collection.search({1.0F, 2.0F}, 5).empty()) {
         std::cerr << "empty collection search was not empty\n";
@@ -182,6 +190,63 @@ int main() {
         },
         "non-finite query value was accepted");
 
-    std::cout << "Phase 3 Collection search test passed\n";
+    wvectordb::Collection batch_collection(2);
+    batch_collection.insert(1, {0.0F, 0.0F});
+    batch_collection.insert_batch({});
+    if (batch_collection.size() != 1 ||
+        !batch_collection.search_batch({}, 1).empty()) {
+        std::cerr << "empty batch operation changed state or output\n";
+        return 1;
+    }
+    batch_collection.insert_batch({
+        {2, {1.0F, 0.0F}},
+        {3, {2.0F, 0.0F}},
+        {2, {3.0F, 0.0F}},
+    });
+    if (batch_collection.size() != 3) {
+        std::cerr << "batch insert created an incorrect number of records\n";
+        return 1;
+    }
+
+    const auto batch_results = batch_collection.search_batch(
+        {{0.0F, 0.0F}, {3.0F, 0.0F}}, 1);
+    if (batch_results.size() != 2 || batch_results[0].size() != 1 ||
+        batch_results[0][0].id != 1 || batch_results[1].size() != 1 ||
+        batch_results[1][0].id != 2 ||
+        batch_results[1][0].distance != 0.0F) {
+        std::cerr << "batch search did not preserve query order or results\n";
+        return 1;
+    }
+
+    const std::size_t size_before_failed_batch = batch_collection.size();
+    expect_invalid_argument(
+        [&] {
+            batch_collection.insert_batch({
+                {4, {4.0F, 0.0F}},
+                {5, {5.0F}},
+            });
+        },
+        "invalid batch insert was accepted");
+    if (batch_collection.size() != size_before_failed_batch) {
+        std::cerr << "failed batch insert changed Collection state\n";
+        return 1;
+    }
+    const auto preserved_after_failed_batch =
+        batch_collection.search({3.0F, 0.0F}, 1);
+    if (preserved_after_failed_batch.size() != 1 ||
+        preserved_after_failed_batch[0].id != 2 ||
+        preserved_after_failed_batch[0].distance != 0.0F) {
+        std::cerr << "failed batch insert did not restore an overwritten record\n";
+        return 1;
+    }
+
+    expect_invalid_argument(
+        [&] {
+            batch_collection.search_batch(
+                {{0.0F, 0.0F}, {1.0F}}, 1);
+        },
+        "invalid batch query was accepted");
+
+    std::cout << "Phase 5 Collection batch API test passed\n";
     return 0;
 }

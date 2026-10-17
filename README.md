@@ -2,7 +2,7 @@
 
 A minimal vector database built from scratch for learning AI engineering.
 
-当前仓库处于 **Phase 3：精确搜索基线**。已实现 Collection 的插入、覆盖、删除、输入校验和精确 top-k 搜索。
+当前仓库处于 **Phase 5：MVP 复盘与下一阶段规划**。Collection 生命周期、精确 top-k 搜索和排序 Benchmark 已完成，正在整理交付入口并选择下一项能力。
 
 ## 项目路线
 
@@ -24,17 +24,40 @@ Idea → Spec → Design → Implementation → Test → Benchmark → Iteration
 
 ## 构建与测试
 
-在安装 CMake 3.20 或更高版本后：
+Release 构建推荐使用 CMake Preset（需要 Ninja）：
 
-    cmake -S . -B build
-    cmake --build build
-    ctest --test-dir build --output-on-failure
+    cmake --preset release
+    cmake --build --preset release
+    ctest --preset release
 
-当前已安装 CMake 4.4.4。项目配置还需要 Ninja 或 MinGW Make 生成器；在生成器就绪前，可使用可用的 C++20 编译器手动编译 Phase 1 smoke test。
+当前已安装 CMake 4.4.4，但系统尚未安装 Ninja；在生成器就绪前，可使用 g++ 16.1.0 和 `-O2 -DNDEBUG` 手动验证 Release-like 构建。
+
+最小示例目标为 `wvectordb_basic_search`，源文件位于 `examples/basic_search.cpp`。它创建二维 Collection、插入三条记录并查询 top-2。
 
 ## 当前状态
 
 - GitHub：witter5261/WVectorDB
 - 分支：main
-- 当前阶段：Phase 3，精确搜索基线
-- 核心 MVP 实现：Collection 生命周期和精确 top-k 已完成；benchmark 待 Phase 4
+- 当前阶段：Phase 5，MVP 复盘与下一阶段规划
+- 基准程序：`benchmark/benchmark.cpp`
+- 最近结果：`benchmark/results/phase4_baseline.csv`（Phase 5 批量实验：`phase5_batch_insert.csv` 和 `phase5_batch_search.csv`）
+- 核心 MVP 实现：Collection 生命周期、精确 top-k 和 partial_sort 搜索已完成
+
+## Phase 5 当前结果
+
+- 已加入 `insert_batch`：批量操作原子提交，失败时原 Collection 不变。
+- 已加入 `search_batch`：结果顺序与查询顺序对应，复用单条搜索校验规则。
+- 批量 Benchmark 表明快照复制是小批次插入的瓶颈，当前已改为只备份受影响记录的回滚式实现。
+- `search_batch` 当前主要提供批量 API 便利，Benchmark 没有显示稳定加速。
+- CMake Preset 已加入 Release 配置；实际构建仍等待 Ninja。
+
+## 当前设计结论
+
+- `records_` 保存连续记录，`positions_` 保存 ID 到下标的映射。
+- 删除使用 swap-and-pop，因此记录的物理位置不稳定；搜索结果依靠 distance 和 ID 排序保证确定性。
+- 距离使用平方 L2，输入为 float，使用 double 累加；`k < N` 使用 `partial_sort`，`k >= N` 使用完整排序。
+- 功能测试和 Benchmark 都使用独立结果校验；Benchmark 数据保存在 `benchmark/results/`。
+
+## Phase 5 计划
+
+先完成 MVP 复盘、CMake Release 构建入口和最小使用示例，再从持久化、批量操作和 ANN 三个方向中选择下一项能力。选择会写回 SPEC.md，并附带明确的非目标和验收标准。

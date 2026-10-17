@@ -77,6 +77,89 @@ void Collection::insert(VectorId id, const Vector& vector) {
     }
 }
 
+void Collection::insert_batch(const std::vector<VectorEntry>& entries) {
+    if (entries.empty()) {
+        return;
+    }
+
+    // Prepare all input before changing either container. A later duplicate
+    // ID replaces an earlier entry in the same batch.
+    std::vector<VectorEntry> prepared_entries;
+    prepared_entries.reserve(entries.size());
+    for (const VectorEntry& entry : entries) {
+        validate_vector(entry.vector);
+        prepared_entries.push_back(VectorEntry{entry.id, entry.vector});
+    }
+
+    std::unordered_map<VectorId, std::size_t> last_occurrences;
+    last_occurrences.reserve(prepared_entries.size());
+    for (std::size_t index = 0; index < prepared_entries.size(); ++index) {
+        last_occurrences[prepared_entries[index].id] = index;
+    }
+
+    std::vector<std::size_t> final_entry_indices;
+    final_entry_indices.reserve(last_occurrences.size());
+    for (std::size_t index = 0; index < prepared_entries.size(); ++index) {
+        if (last_occurrences.at(prepared_entries[index].id) == index) {
+            final_entry_indices.push_back(index);
+        }
+    }
+
+    // Only existing records that will be replaced need backups. All possible
+    // allocations happen before mutation, so the mutation phase can roll back
+    // with non-throwing vector moves, map erases, and pop operations.
+    std::vector<std::pair<std::size_t, Vector>> backups;
+    backups.reserve(final_entry_indices.size());
+    std::size_t new_record_count = 0;
+    for (const std::size_t index : final_entry_indices) {
+        const auto position = positions_.find(prepared_entries[index].id);
+        if (position == positions_.end()) {
+            ++new_record_count;
+        } else {
+            backups.emplace_back(position->second,
+                                 records_[position->second].vector);
+        }
+    }
+
+    const std::size_t original_record_count = records_.size();
+    records_.reserve(original_record_count + new_record_count);
+    positions_.reserve(positions_.size() + new_record_count);
+
+    std::vector<VectorId> inserted_ids;
+    inserted_ids.reserve(new_record_count);
+    try {
+        for (const std::size_t index : final_entry_indices) {
+            const VectorEntry& entry = prepared_entries[index];
+            const auto existing = positions_.find(entry.id);
+            if (existing != positions_.end()) {
+                records_[existing->second].vector =
+                    std::move(prepared_entries[index].vector);
+                continue;
+            }
+
+            const std::size_t new_index = records_.size();
+            records_.push_back(
+                Record{entry.id, std::move(prepared_entries[index].vector)});
+            const auto [iterator, inserted] =
+                positions_.emplace(entry.id, new_index);
+            static_cast<void>(iterator);
+            if (!inserted) {
+                throw std::logic_error("batch ID index insertion failed");
+            }
+            inserted_ids.push_back(entry.id);
+        }
+    } catch (...) {
+        for (const VectorId inserted_id : inserted_ids) {
+            positions_.erase(inserted_id);
+        }
+        records_.resize(original_record_count);
+        for (auto& backup : backups) {
+            records_[backup.first].vector = std::move(backup.second);
+        }
+        throw;
+    }
+}
+
 bool Collection::erase(VectorId id) noexcept {
     const auto position = positions_.find(id);
     if (position == positions_.end()) {
@@ -114,18 +197,36 @@ std::vector<SearchResult> Collection::search(const Vector& query,
             record.id, squared_l2_distance(query, record.vector)});
     }
 
-    std::sort(results.begin(), results.end(),
-              [](const SearchResult& left, const SearchResult& right) {
-                  if (left.distance != right.distance) {
-                      return left.distance < right.distance;
-                  }
-                  return left.id < right.id;
-              });
+    const auto compare = [](const SearchResult& left,
+                            const SearchResult& right) {
+        if (left.distance != right.distance) {
+            return left.distance < right.distance;
+        }
+        return left.id < right.id;
+    };
+
+    if (k < results.size()) {
+        std::partial_sort(results.begin(), results.begin() + k,
+                          results.end(), compare);
+    } else {
+        std::sort(results.begin(), results.end(), compare);
+    }
 
     if (k < results.size()) {
         results.resize(k);
     }
     return results;
+}
+
+std::vector<std::vector<SearchResult>> Collection::search_batch(
+    const std::vector<Vector>& queries,
+    std::size_t k) const {
+    std::vector<std::vector<SearchResult>> batch_results;
+    batch_results.reserve(queries.size());
+    for (const Vector& query : queries) {
+        batch_results.push_back(search(query, k));
+    }
+    return batch_results;
 }
 
 void Collection::validate_vector(const Vector& vector) const {

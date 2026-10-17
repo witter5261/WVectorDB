@@ -27,11 +27,36 @@ add_executable(wvectordb_smoke
 
 target_link_libraries(wvectordb_smoke PRIVATE wvectordb)
 
+add_executable(wvectordb_benchmark
+    benchmark/benchmark.cpp
+)
+
+target_link_libraries(wvectordb_benchmark PRIVATE wvectordb)
+
+add_executable(wvectordb_batch_benchmark
+    benchmark/batch_benchmark.cpp
+)
+
+target_link_libraries(wvectordb_batch_benchmark PRIVATE wvectordb)
+
+add_executable(wvectordb_basic_search
+    examples/basic_search.cpp
+)
+
+target_link_libraries(wvectordb_basic_search PRIVATE wvectordb)
+
 if(MSVC)
     target_compile_options(wvectordb_smoke PRIVATE /W4 /permissive-)
+    target_compile_options(wvectordb_benchmark PRIVATE /W4 /permissive-)
+    target_compile_options(wvectordb_batch_benchmark PRIVATE /W4 /permissive-)
+    target_compile_options(wvectordb_basic_search PRIVATE /W4 /permissive-)
 else()
     target_compile_options(wvectordb_smoke PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(wvectordb_benchmark PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(wvectordb_batch_benchmark PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(wvectordb_basic_search PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
 enable_testing()
-add_test(NAME phase3_collection_search COMMAND wvectordb_smoke)
+add_test(NAME phase5_collection_batch_api COMMAND wvectordb_smoke)
+add_test(NAME phase5_basic_search_example COMMAND wvectordb_basic_search)

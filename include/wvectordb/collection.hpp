@@ -16,8 +16,12 @@ public:
     std::size_t size() const noexcept;
 
     void insert(VectorId id, const Vector& vector);
+    void insert_batch(const std::vector<VectorEntry>& entries);
     bool erase(VectorId id) noexcept;
     std::vector<SearchResult> search(const Vector& query, std::size_t k) const;
+    std::vector<std::vector<SearchResult>> search_batch(
+        const std::vector<Vector>& queries,
+        std::size_t k) const;
 
 private:
     struct Record {
