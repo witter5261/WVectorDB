@@ -1,22 +1,79 @@
 #include "wvectordb/collection.hpp"
 #include "wvectordb/types.hpp"
 
+#include <cmath>
 #include <iostream>
+#include <limits>
+#include <stdexcept>
+
+namespace {
+
+template <typename Function>
+void expect_invalid_argument(Function&& function, const char* message) {
+    try {
+        function();
+    } catch (const std::invalid_argument&) {
+        return;
+    } catch (...) {
+        std::cerr << message << " (wrong exception type)\n";
+        std::exit(1);
+    }
+
+    std::cerr << message << " (no exception)\n";
+    std::exit(1);
+}
+
+}  // namespace
 
 int main() {
+    expect_invalid_argument(
+        [] { wvectordb::Collection invalid(0); },
+        "zero dimension was accepted");
+
     wvectordb::Collection collection(3);
-
     if (collection.dimension() != 3 || collection.size() != 0) {
-        std::cerr << "Collection skeleton check failed\n";
+        std::cerr << "initial Collection state is incorrect\n";
         return 1;
     }
 
-    const wvectordb::SearchResult result{7, 1.5F};
-    if (result.id != 7 || result.distance != 1.5F) {
-        std::cerr << "Public type check failed\n";
+    collection.insert(0, {1.0F, 2.0F, 3.0F});
+    if (collection.size() != 1) {
+        std::cerr << "first insert did not change size\n";
         return 1;
     }
 
-    std::cout << "Phase 1 smoke test passed\n";
+    collection.insert(0, {4.0F, 5.0F, 6.0F});
+    if (collection.size() != 1) {
+        std::cerr << "duplicate ID created a second record\n";
+        return 1;
+    }
+
+    collection.insert(7, {7.0F, 8.0F, 9.0F});
+    if (collection.size() != 2) {
+        std::cerr << "second ID did not create a record\n";
+        return 1;
+    }
+
+    expect_invalid_argument(
+        [&] { collection.insert(11, {1.0F, 2.0F}); },
+        "wrong vector dimension was accepted");
+    if (collection.size() != 2) {
+        std::cerr << "failed insert changed size\n";
+        return 1;
+    }
+
+    expect_invalid_argument(
+        [&] {
+            collection.insert(
+                11,
+                {1.0F, std::numeric_limits<float>::quiet_NaN(), 3.0F});
+        },
+        "NaN vector value was accepted");
+    if (collection.size() != 2) {
+        std::cerr << "non-finite insert changed size\n";
+        return 1;
+    }
+
+    std::cout << "Phase 2 insert test passed\n";
     return 0;
 }

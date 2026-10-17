@@ -11,7 +11,7 @@
 - [x] 决定错误表达方式、删除策略和 benchmark 输出格式
 - [x] 将审查结论写回 SPEC.md、DESIGN.md、AI_LOG.md
 
-## Phase 1：可编译骨架（当前）
+## Phase 1：可编译骨架
 
 - [x] 增加 CMakeLists.txt
 - [x] 增加公共类型和 Collection 骨架接口
@@ -22,12 +22,14 @@
 - [x] 将手动构建和 smoke test 结果补充到 AI_LOG.md
 - [ ] 安装 Ninja 或 MinGW Make 后运行 CMake configure/build/CTest
 
-## Phase 2：生命周期与校验
+## Phase 2：生命周期与校验（当前）
 
-- [ ] 实现创建、插入、覆盖、删除和 size
-- [ ] 实现维度、有限值和 ID 校验
-- [ ] 为每个边界行为增加测试
-- [ ] 更新 README、AI_LOG 和 TODO
+- [x] 实现 Collection 创建和 dimension/size
+- [x] 实现插入新 ID 和重复 ID 覆盖
+- [x] 实现维度和有限值校验
+- [x] 为插入边界行为增加测试
+- [ ] 为删除行为增加测试
+- [x] 更新 README、AI_LOG 和 TODO
 
 ## Phase 3：精确搜索
 

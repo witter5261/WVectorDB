@@ -2,7 +2,7 @@
 
 - 版本：0.1.0
 - 对应规格：SPEC.md 0.1.0
-- 状态：已通过 Phase 0 审查；Phase 1 骨架实现中
+- 状态：Phase 2 Collection 生命周期与输入校验实现中
 
 本文描述可审查的设计和当前骨架边界。MVP 的完整数据操作仍未实现。
 
@@ -21,7 +21,7 @@
     └── types.hpp        VectorId、Vector、SearchResult 等类型
 
     src/
-    └── collection.cpp   Collection 骨架实现
+    └── collection.cpp   Collection 生命周期实现
 
     tests/
     └── smoke_test.cpp    Phase 1 编译和基础类型自检
@@ -47,7 +47,8 @@
             std::size_t k) const;
     };
 
-Phase 1 只提供构造、dimension 和 size 的骨架接口；insert、erase、search 在 Phase 2 和 Phase 3 分阶段加入。
+Phase 1 提供构造、dimension 和 size 的骨架接口。
+Phase 2 已加入 insert；erase 将在本阶段后续小步加入，search 留到 Phase 3。
 
 - VectorId 是 std::uint64_t，0 合法。
 - Vector 是 std::vector<float>。
@@ -100,7 +101,7 @@ Phase 1 只提供构造、dimension 和 size 的骨架接口；insert、erase、
 
 ## 8. 测试设计
 
-Phase 1 使用无第三方依赖的 smoke test，并通过 CTest 注册。
+Phase 2 使用无第三方依赖的 Collection 测试，并通过 CTest 注册。
 
 后续测试按风险分层：
 

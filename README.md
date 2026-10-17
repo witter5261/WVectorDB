@@ -2,7 +2,7 @@
 
 A minimal vector database built from scratch for learning AI engineering.
 
-当前仓库处于 **Phase 1：可编译骨架**。Phase 0 的规格审查已完成，当前只验证 C++ 类型、CMake 目标和 smoke test，不实现完整的向量插入、删除或搜索。
+当前仓库处于 **Phase 2：Collection 生命周期与输入校验**。已实现 Collection 的插入、重复 ID 覆盖和基础输入校验；删除和搜索将在后续小步完成。
 
 ## 项目路线
 

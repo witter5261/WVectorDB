@@ -43,9 +43,33 @@ Spec 和 Design 的核心方向一致，已具备进入 Phase 1 骨架的条件�
 ### 验证
 
 - 已安装 CMake 4.4.4 到 C:/Users/22117/Documents/Codex/tools/cmake-4.4.4/bin/cmake.exe，并加入当前用户 PATH。
-- 已使用 g++ 16.1.0 和 C++20 手动构建并运行 smoke test，输出为 Phase 1 smoke test passed。\n- CMake 配置尝试因系统缺少 MinGW Makefiles 所需的 make/ninja 生成器而停止；CMake 本身已可执行。
-- 首次编译发现头文件与实现的 noexcept 声明不一致，已统一后重新编译通过。\n- 尚未实现 insert、erase、search，也没有宣称 MVP 完成。
+- 已使用 g++ 16.1.0 和 C++20 手动构建并运行 smoke test，输出为 Phase 1 smoke test passed。
+- CMake 配置尝试因系统缺少 MinGW Makefiles 所需的 make/ninja 生成器而停止；CMake 本身已可执行。
+- 首次编译发现头文件与实现的 noexcept 声明不一致，已统一后重新编译通过。
+- 尚未实现 insert、erase、search，也没有宣称 MVP 完成。
 
 ### 下一步
 
 进入 Phase 2：先实现 Collection 生命周期和输入校验，再补齐对应自动化测试。
+## 2026-10-17 — Phase 2 插入与数据结构第一步
+
+### 设计决定
+
+- Collection 使用 records_ 保存连续的 Record；每条 Record 包含 VectorId 和 Vector。
+- positions_ 使用 unordered_map<VectorId, std::size_t> 保存 ID 到 records_ 下标的映射。
+- 连续记录数组为后续线性搜索提供顺序访问；ID 索引让覆盖操作不需要扫描全部向量。
+- insert 先校验维度和有限值，再改变 records_ 或 positions_，避免错误输入留下半更新状态。
+- 重复 ID 复制新向量后覆盖旧向量，size 不增加。
+- 新记录加入 records_ 后再写入 positions_；索引写入发生异常时回滚刚加入的记录。
+- Collection 构造时拒绝 dimension == 0。
+
+### 验证
+
+- g++ 16.1.0，C++20，-Wall -Wextra -Wpedantic 编译通过。
+- 测试通过：合法插入、ID 0、重复 ID 覆盖、维度错误、NaN 拒绝和失败插入不改变 size。
+- 输出：Phase 2 insert test passed。
+- 尚未实现 erase、swap-and-pop 和 search。
+
+### 学习重点
+
+这一步先验证数据结构不变量，再继续增加删除和搜索。后续删除会展示“物理位置不稳定”和“索引必须同步更新”的取舍。

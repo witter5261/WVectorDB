@@ -34,4 +34,4 @@ else()
 endif()
 
 enable_testing()
-add_test(NAME phase1_smoke COMMAND wvectordb_smoke)
+add_test(NAME phase2_insert COMMAND wvectordb_smoke)

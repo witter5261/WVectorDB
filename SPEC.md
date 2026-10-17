@@ -1,7 +1,7 @@
 # WVectorDB Specification
 
 - 版本：0.1.0
-- 状态：已通过 Phase 0 审查，正在进行 Phase 1 可编译骨架
+- 状态：Phase 2 Collection 生命周期与输入校验进行中
 - 项目类型：用于学习 AI 工程的最小向量数据库
 - MVP 目标：精确最近邻检索基线
 
@@ -17,7 +17,7 @@ WVectorDB 提供一个可读、可测试、可基准测试的本地向量检索�
 
 项目首先服务于学习和实验，不以生产级吞吐量或完整数据库功能为目标。
 
-当前工作阶段是 Phase 1：只建立可编译骨架和公共类型，不实现 MVP 的完整生命周期或搜索功能。
+当前工作阶段是 Phase 2：实现 Collection 生命周期、插入和输入校验；搜索功能仍留到 Phase 3。
 
 ## 2. MVP 用户场景
 
@@ -128,8 +128,8 @@ MVP 的 benchmark 记录：
 
 - C++ 标准：C++20。
 - 构建系统：CMake 3.20 或更高版本。
-- Phase 1：建立 CMake 骨架、公共类型、空 Collection 接口和 smoke test，不实现完整数据操作。
-- Phase 2：实现 Collection 生命周期和输入校验。
+- Phase 1：建立 CMake 骨架、公共类型、空 Collection 接口和 smoke test。
+- Phase 2：实现 Collection 生命周期、插入、覆盖、删除和输入校验。
 - Phase 3：实现平方 L2 距离和精确 top-k 搜索。
 - Phase 4：加入 benchmark，比较完整排序与 top-k 优化。
 - Phase 5：复盘并决定下一项能力。
