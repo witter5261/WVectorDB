@@ -16,6 +16,7 @@ public:
     std::size_t size() const noexcept;
 
     void insert(VectorId id, const Vector& vector);
+    bool erase(VectorId id) noexcept;
 
 private:
     struct Record {

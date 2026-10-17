@@ -24,7 +24,7 @@
     └── collection.cpp   Collection 生命周期实现
 
     tests/
-    └── smoke_test.cpp    Phase 1 编译和基础类型自检
+    └── smoke_test.cpp    Phase 2 Collection 生命周期自检
 
     benchmark/
     └── （Phase 4 使用）

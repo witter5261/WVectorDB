@@ -1,7 +1,6 @@
 #include "wvectordb/collection.hpp"
 #include "wvectordb/types.hpp"
 
-#include <cmath>
 #include <cstdlib>
 #include <iostream>
 #include <limits>
@@ -82,6 +81,7 @@ int main() {
         std::cerr << "a failed replacement lost the existing ID mapping\n";
         return 1;
     }
+
     expect_invalid_argument(
         [&] {
             collection.insert(
@@ -94,6 +94,49 @@ int main() {
         return 1;
     }
 
-    std::cout << "Phase 2 insert test passed\n";
+    wvectordb::Collection erase_collection(2);
+    erase_collection.insert(10, {10.0F, 10.0F});
+    erase_collection.insert(20, {20.0F, 20.0F});
+    erase_collection.insert(30, {30.0F, 30.0F});
+    erase_collection.insert(40, {40.0F, 40.0F});
+
+    if (erase_collection.erase(999)) {
+        std::cerr << "erasing a missing ID returned true\n";
+        return 1;
+    }
+    if (erase_collection.size() != 4) {
+        std::cerr << "missing erase changed size\n";
+        return 1;
+    }
+
+    if (!erase_collection.erase(20) || erase_collection.size() != 3) {
+        std::cerr << "middle erase failed\n";
+        return 1;
+    }
+    erase_collection.insert(40, {41.0F, 41.0F});
+    if (erase_collection.size() != 3) {
+        std::cerr << "moved ID index was not updated after middle erase\n";
+        return 1;
+    }
+
+    if (!erase_collection.erase(30) || erase_collection.size() != 2) {
+        std::cerr << "last erase failed\n";
+        return 1;
+    }
+    if (!erase_collection.erase(10) || erase_collection.size() != 1) {
+        std::cerr << "first erase failed\n";
+        return 1;
+    }
+    erase_collection.insert(40, {42.0F, 42.0F});
+    if (erase_collection.size() != 1) {
+        std::cerr << "moved ID index was not updated after first erase\n";
+        return 1;
+    }
+    if (!erase_collection.erase(40) || erase_collection.size() != 0) {
+        std::cerr << "final erase failed\n";
+        return 1;
+    }
+
+    std::cout << "Phase 2 Collection lifecycle test passed\n";
     return 0;
 }

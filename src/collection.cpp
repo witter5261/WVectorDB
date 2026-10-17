@@ -1,5 +1,6 @@
 #include "wvectordb/collection.hpp"
 
+#include <cassert>
 #include <cmath>
 #include <stdexcept>
 #include <utility>
@@ -46,12 +47,34 @@ void Collection::insert(VectorId id, const Vector& vector) {
             throw std::logic_error("vector ID index insertion failed");
         }
     } catch (...) {
-        // Exactly one record was appended in this call. The map either has
-        // no new entry or the standard insertion operation has completed.
-        // On failure, remove the appended record and rethrow the error.
+        // Exactly one record was appended in this call. On failure, remove
+        // that record and rethrow the original error.
         records_.pop_back();
         throw;
     }
+}
+
+bool Collection::erase(VectorId id) noexcept {
+    const auto position = positions_.find(id);
+    if (position == positions_.end()) {
+        return false;
+    }
+
+    const std::size_t removed_index = position->second;
+    const std::size_t last_index = records_.size() - 1;
+
+    if (removed_index != last_index) {
+        const VectorId moved_id = records_.back().id;
+        records_[removed_index] = std::move(records_.back());
+
+        const auto moved_position = positions_.find(moved_id);
+        assert(moved_position != positions_.end());
+        moved_position->second = removed_index;
+    }
+
+    records_.pop_back();
+    positions_.erase(position);
+    return true;
 }
 
 void Collection::validate_vector(const Vector& vector) const {

@@ -99,3 +99,19 @@ Spec 和 Design 的核心方向一致，已具备进入 Phase 1 骨架的条件�
 ### 局限
 
 当前 Vector 固定为 std::vector<float>，测试无法稳定注入内存分配异常；因此本次测试验证了可控的校验失败和后续状态可用性，容器分配异常依赖标准库的异常保证和代码结构。
+## 2026-10-17 — erase 与 swap-and-pop
+
+### 设计决定
+
+- erase 先通过 positions_ 找到被删除记录的下标；不存在的 ID 返回 false，不修改任何状态。
+- 删除中间记录时，用 records_ 最后一条记录覆盖被删除位置，再把被移动 ID 的 positions_ 下标更新为新位置。
+- 最后 pop_back，并删除被删除 ID 的索引。
+- 记录物理顺序不稳定，但后续搜索按 distance、id 排序，因此不依赖物理顺序。
+
+### 验证
+
+- 测试不存在 ID 不改变 size。
+- 测试中间、首项、末项删除。
+- 删除中间或首项后，再次覆盖被移动的 ID，验证 positions_ 已同步更新。
+- g++ 16.1.0、C++20、-Wall -Wextra -Wpedantic 编译通过。
+- 输出：Phase 2 Collection lifecycle test passed。
