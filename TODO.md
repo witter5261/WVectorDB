@@ -22,7 +22,7 @@
 - [x] 将手动构建和 smoke test 结果补充到 AI_LOG.md
 - [ ] 安装 Ninja 或 MinGW Make 后运行 CMake configure/build/CTest
 
-## Phase 2：生命周期与校验（当前）
+## Phase 2：生命周期与校验
 
 - [x] 实现 Collection 创建和 dimension/size
 - [x] 实现插入新 ID 和重复 ID 覆盖
@@ -32,11 +32,11 @@
 - [x] 为删除行为增加测试
 - [x] 更新 README、AI_LOG 和 TODO
 
-## Phase 3：精确搜索
+## Phase 3：精确搜索（当前）
 
-- [ ] 实现平方 L2 距离
-- [ ] 实现精确 top-k 搜索
-- [ ] 覆盖空集合、k 边界、重复距离和确定性排序
+- [x] 实现平方 L2 距离
+- [x] 实现精确 top-k 搜索
+- [x] 覆盖空集合、k 边界、重复距离和确定性排序
 - [ ] 与独立参考实现比较
 
 ## Phase 4：Benchmark

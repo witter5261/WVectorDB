@@ -17,6 +17,7 @@ public:
 
     void insert(VectorId id, const Vector& vector);
     bool erase(VectorId id) noexcept;
+    std::vector<SearchResult> search(const Vector& query, std::size_t k) const;
 
 private:
     struct Record {

@@ -2,7 +2,7 @@
 
 A minimal vector database built from scratch for learning AI engineering.
 
-当前仓库处于 **Phase 2：Collection 生命周期与输入校验**。已实现 Collection 的插入、重复 ID 覆盖和基础输入校验；删除和搜索将在后续小步完成。
+当前仓库处于 **Phase 3：精确搜索基线**。已实现 Collection 的插入、覆盖、删除、输入校验和精确 top-k 搜索。
 
 ## 项目路线
 
@@ -36,5 +36,5 @@ Idea → Spec → Design → Implementation → Test → Benchmark → Iteration
 
 - GitHub：witter5261/WVectorDB
 - 分支：main
-- 当前阶段：Phase 1，可编译骨架
-- 核心 MVP 实现：尚未开始
+- 当前阶段：Phase 3，精确搜索基线
+- 核心 MVP 实现：Collection 生命周期和精确 top-k 已完成；benchmark 待 Phase 4

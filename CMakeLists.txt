@@ -34,4 +34,4 @@ else()
 endif()
 
 enable_testing()
-add_test(NAME phase2_collection_lifecycle COMMAND wvectordb_smoke)
+add_test(NAME phase3_collection_search COMMAND wvectordb_smoke)

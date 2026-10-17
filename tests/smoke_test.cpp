@@ -137,6 +137,51 @@ int main() {
         return 1;
     }
 
-    std::cout << "Phase 2 Collection lifecycle test passed\n";
+    wvectordb::Collection search_collection(2);
+    search_collection.insert(100, {0.0F, 0.0F});
+    search_collection.insert(200, {3.0F, 4.0F});
+    search_collection.insert(300, {1.0F, 0.0F});
+    search_collection.insert(400, {-1.0F, 0.0F});
+    search_collection.insert(500, {2.0F, 0.0F});
+
+    if (!search_collection.search({0.0F, 0.0F}, 0).empty()) {
+        std::cerr << "k=0 did not return an empty result\n";
+        return 1;
+    }
+
+    const auto top_three = search_collection.search({0.0F, 0.0F}, 3);
+    if (top_three.size() != 3 || top_three[0].id != 100 ||
+        top_three[0].distance != 0.0F || top_three[1].id != 300 ||
+        top_three[1].distance != 1.0F || top_three[2].id != 400 ||
+        top_three[2].distance != 1.0F) {
+        std::cerr << "top-3 search ordering or distance is incorrect\n";
+        return 1;
+    }
+
+    const auto all_results = search_collection.search({0.0F, 0.0F}, 99);
+    if (all_results.size() != 5 || all_results[3].id != 500 ||
+        all_results[3].distance != 4.0F || all_results[4].id != 200 ||
+        all_results[4].distance != 25.0F) {
+        std::cerr << "k larger than collection size was handled incorrectly\n";
+        return 1;
+    }
+
+    wvectordb::Collection empty_search_collection(2);
+    if (!empty_search_collection.search({1.0F, 2.0F}, 5).empty()) {
+        std::cerr << "empty collection search was not empty\n";
+        return 1;
+    }
+
+    expect_invalid_argument(
+        [&] { search_collection.search({1.0F}, 2); },
+        "wrong query dimension was accepted");
+    expect_invalid_argument(
+        [&] {
+            search_collection.search(
+                {1.0F, std::numeric_limits<float>::infinity()}, 2);
+        },
+        "non-finite query value was accepted");
+
+    std::cout << "Phase 3 Collection search test passed\n";
     return 0;
 }

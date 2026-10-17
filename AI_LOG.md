@@ -115,3 +115,24 @@ Spec 和 Design 的核心方向一致，已具备进入 Phase 1 骨架的条件�
 - 删除中间或首项后，再次覆盖被移动的 ID，验证 positions_ 已同步更新。
 - g++ 16.1.0、C++20、-Wall -Wextra -Wpedantic 编译通过。
 - 输出：Phase 2 Collection lifecycle test passed。
+
+## 2026-10-17 — Phase 3 精确 top-k 搜索
+
+### 设计决定
+
+- 使用平方 L2 距离 `sum((query[i] - vector[i])^2)`。平方根是单调函数，不会改变距离排序；省略它可以减少每个维度的计算开销。
+- 输入元素仍为 `float`，中间累加使用 `double`，最后转换为 `float`。如果结果不能表示为有限 `float`，抛出 `std::overflow_error`，避免把不可排序的值放进结果。
+- 初版对所有记录线性扫描，收集结果后按 `distance` 升序、`id` 升序完整排序，再截取前 `k` 项。这样得到最容易审查的精确基线，复杂度为 O(ND + N log N)；堆优化和 ANN 索引留到 benchmark 后决定。
+- `search` 复用 Collection 的维度和有限值校验，因此非法查询在任何 `k` 值下都会被拒绝。
+
+### 验证
+
+- 覆盖 `k=0`、`k>N`、空 Collection、已知二维距离、重复距离的 ID 排序、错误维度和非有限查询值。
+- g++ 16.1.0、C++20、`-Wall -Wextra -Wpedantic` 编译通过。
+- 命令：`g++ -std=c++20 -Wall -Wextra -Wpedantic -Iinclude src/collection.cpp tests/smoke_test.cpp -o build/wvectordb_smoke.exe`。
+- 输出：`Phase 3 Collection search test passed`。
+
+### 未完成项
+
+- 当前测试使用手工构造的预期值；TODO 中保留独立朴素参考实现比较。
+- CMake 配置仍需要 Ninja 或 MinGW Make 生成器；目前使用手动 g++ 命令验证。

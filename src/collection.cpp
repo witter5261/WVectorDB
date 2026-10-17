@@ -1,9 +1,32 @@
 #include "wvectordb/collection.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <limits>
 #include <stdexcept>
 #include <utility>
+
+namespace {
+
+float squared_l2_distance(const wvectordb::Vector& left,
+                          const wvectordb::Vector& right) {
+    double distance = 0.0;
+    for (std::size_t index = 0; index < left.size(); ++index) {
+        const double difference = static_cast<double>(left[index]) -
+                                  static_cast<double>(right[index]);
+        distance += difference * difference;
+    }
+
+    if (!std::isfinite(distance) ||
+        distance > static_cast<double>(std::numeric_limits<float>::max())) {
+        throw std::overflow_error(
+            "squared L2 distance is not representable as float");
+    }
+    return static_cast<float>(distance);
+}
+
+}  // namespace
 
 namespace wvectordb {
 
@@ -75,6 +98,34 @@ bool Collection::erase(VectorId id) noexcept {
     records_.pop_back();
     positions_.erase(position);
     return true;
+}
+
+std::vector<SearchResult> Collection::search(const Vector& query,
+                                             std::size_t k) const {
+    validate_vector(query);
+    if (k == 0 || records_.empty()) {
+        return {};
+    }
+
+    std::vector<SearchResult> results;
+    results.reserve(records_.size());
+    for (const Record& record : records_) {
+        results.push_back(SearchResult{
+            record.id, squared_l2_distance(query, record.vector)});
+    }
+
+    std::sort(results.begin(), results.end(),
+              [](const SearchResult& left, const SearchResult& right) {
+                  if (left.distance != right.distance) {
+                      return left.distance < right.distance;
+                  }
+                  return left.id < right.id;
+              });
+
+    if (k < results.size()) {
+        results.resize(k);
+    }
+    return results;
 }
 
 void Collection::validate_vector(const Vector& vector) const {
