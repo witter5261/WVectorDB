@@ -3,6 +3,7 @@
 #include "wvectordb/types.hpp"
 
 #include <cstddef>
+#include <filesystem>
 #include <unordered_map>
 #include <vector>
 
@@ -22,6 +23,9 @@ public:
     std::vector<std::vector<SearchResult>> search_batch(
         const std::vector<Vector>& queries,
         std::size_t k) const;
+
+    void save(const std::filesystem::path& path) const;
+    static Collection load(const std::filesystem::path& path);
 
 private:
     struct Record {

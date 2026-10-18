@@ -2,6 +2,8 @@
 #include "wvectordb/types.hpp"
 
 #include <cstdlib>
+#include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <limits>
 #include <stdexcept>
@@ -13,6 +15,21 @@ void expect_invalid_argument(Function&& function, const char* message) {
     try {
         function();
     } catch (const std::invalid_argument&) {
+        return;
+    } catch (...) {
+        std::cerr << message << " (wrong exception type)\n";
+        std::exit(1);
+    }
+
+    std::cerr << message << " (no exception)\n";
+    std::exit(1);
+}
+
+template <typename Function>
+void expect_runtime_error(Function&& function, const char* message) {
+    try {
+        function();
+    } catch (const std::runtime_error&) {
         return;
     } catch (...) {
         std::cerr << message << " (wrong exception type)\n";
@@ -247,6 +264,47 @@ int main() {
         },
         "invalid batch query was accepted");
 
-    std::cout << "Phase 5 Collection batch API test passed\n";
+    const std::filesystem::path persistence_path =
+        std::filesystem::temp_directory_path() / "wvectordb_phase6_test.wvdb";
+    std::error_code cleanup_error;
+    std::filesystem::remove(persistence_path, cleanup_error);
+
+    wvectordb::Collection persistence_collection(2);
+    persistence_collection.insert_batch({
+        {11, {1.0F, 1.0F}},
+        {22, {3.0F, 4.0F}},
+    });
+    persistence_collection.save(persistence_path);
+    const auto loaded_collection =
+        wvectordb::Collection::load(persistence_path);
+    const auto loaded_results = loaded_collection.search({1.0F, 1.0F}, 2);
+    if (loaded_collection.dimension() != 2 ||
+        loaded_collection.size() != 2 || loaded_results.size() != 2 ||
+        loaded_results[0].id != 11 || loaded_results[0].distance != 0.0F ||
+        loaded_results[1].id != 22 || loaded_results[1].distance != 13.0F) {
+        std::cerr << "saved Collection did not round-trip correctly\n";
+        return 1;
+    }
+
+    {
+        std::ofstream corrupt_file(
+            persistence_path, std::ios::binary | std::ios::trunc);
+        corrupt_file << "BAD!";
+    }
+    expect_invalid_argument(
+        [&] { static_cast<void>(wvectordb::Collection::load(persistence_path)); },
+        "invalid Collection file was accepted");
+
+    {
+        std::ofstream truncated_file(
+            persistence_path, std::ios::binary | std::ios::trunc);
+        truncated_file << "WVDB";
+    }
+    expect_runtime_error(
+        [&] { static_cast<void>(wvectordb::Collection::load(persistence_path)); },
+        "truncated Collection file was accepted");
+    std::filesystem::remove(persistence_path, cleanup_error);
+
+    std::cout << "Phase 6 Collection persistence test passed\n";
     return 0;
 }

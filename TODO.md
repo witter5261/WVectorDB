@@ -48,7 +48,7 @@
 - [x] 将 partial_sort 应用到默认 search，并保留 k >= N 的完整排序分支
 - [x] 扩大 k 参数并判断是否需要额外阈值
 
-## Phase 5：MVP 复盘与下一步（当前）
+## Phase 5：MVP 复盘与下一步
 
 - [x] 总结 Collection 数据结构、异常安全和搜索算法
 - [x] 总结功能测试、独立参考校验和 Benchmark 结论
@@ -60,3 +60,12 @@
 - [x] 编写批量 API 的 Benchmark 并减少批量插入的复制成本
 - [x] 根据 Benchmark 决定暂不优化 search_batch
 - [ ] 编写 Phase 5 复盘和下一阶段验收标准
+
+## Phase 6：最小持久化（当前）
+
+- [x] 定义版本化二进制文件格式
+- [x] 实现 Collection save/load
+- [x] 测试保存加载 round-trip
+- [x] 拒绝错误魔数、截断文件和非法文件内容
+- [ ] 增加更多文件损坏和大数据量测试
+- [ ] 评估临时文件与原子替换策略

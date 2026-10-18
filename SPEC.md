@@ -1,7 +1,7 @@
 # WVectorDB Specification
 
-- 版本：0.2.0
-- 状态：Phase 5 MVP 复盘与下一阶段规划中
+- 版本：0.3.0
+- 状态：Phase 6 最小持久化进行中
 - 项目类型：用于学习 AI 工程的最小向量数据库
 - MVP 目标：精确最近邻检索基线
 
@@ -17,7 +17,7 @@ WVectorDB 提供一个可读、可测试、可基准测试的本地向量检索�
 
 项目首先服务于学习和实验，不以生产级吞吐量或完整数据库功能为目标。
 
-当前工作阶段是 Phase 5：复盘 MVP 的设计、测试、Benchmark 和构建入口，再决定下一项能力。
+当前工作阶段是 Phase 6：为 Collection 增加可测试的最小文件持久化。
 
 ## 2. MVP 用户场景
 
@@ -44,6 +44,8 @@ WVectorDB 提供一个可读、可测试、可基准测试的本地向量检索�
 - dimension()：返回固定维度。
 - `insert_batch(entries)`：按输入顺序批量插入或覆盖；整个批次原子提交，任一条目失败时 Collection 保持调用前状态；同一批次重复 ID 以后出现的条目覆盖较早条目；空批次不改变状态。
 - `search_batch(queries, k)`：按 queries 原顺序返回每个查询的 search 结果；任一查询非法时抛出参数错误；空查询列表返回空结果。
+- `save(path)`：将 Collection 保存为版本化二进制文件。
+- `load(path)`：读取并校验版本化文件，恢复一个新的 Collection。
 - MVP 不提供 Database 对象、集合命名注册或多个 Collection 的持久化管理。
 
 ### 3.2 Exact top-k search
@@ -91,6 +93,7 @@ MVP 不实现：
 - GPU、SIMD 或平台专用优化；
 - cosine、inner-product 等其他距离；
 - 数据库级 Collection 注册和命名管理。
+- 崩溃期间的原子替换、增量日志、文件锁和并发写入。
 
 这些内容可以在 MVP 有测试和 benchmark 后单独立项。
 
@@ -105,6 +108,8 @@ MVP 不实现：
 - 能处理 k=0、k>N、空 Collection、重复距离。
 - 结果排序满足距离升序、ID 升序。
 - 批量插入失败不会留下部分更新；批量搜索结果顺序与查询顺序一致。
+- 保存后加载得到的 Collection 与原 Collection 具有相同的维度、数量、ID、向量和搜索结果。
+- 错误魔数、未知版本、截断文件和非法维度必须被拒绝。
 
 ### 工程验收
 
@@ -136,6 +141,7 @@ MVP 的 benchmark 记录：
 - Phase 3：实现平方 L2 距离和精确 top-k 搜索。
 - Phase 4：加入 benchmark，比较完整排序与 top-k 优化。
 - Phase 5：复盘 MVP、修正文档和构建入口，实现批量 API，并决定下一项能力。
+- Phase 6：实现最小持久化格式、读写校验和 round-trip 测试。
 
 测试初期不依赖第三方框架，使用自检可执行文件并接入 CTest；当项目规模证明有必要时再评估 GoogleTest 等框架。
 

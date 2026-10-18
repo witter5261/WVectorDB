@@ -338,3 +338,19 @@ Spec 和 Design 的核心方向一致，已具备进入 Phase 1 骨架的条件�
 - 批量插入保留原子语义，并采用回滚式实现。
 - 批量搜索保持逐查询复用，后续只有在需要批量输出缓冲区或并行执行时再重新设计。
 - 回归验证输出：`Phase 5 Collection batch API test passed`；基准程序的所有变体均通过独立参考结果校验。
+
+## 2026-10-18 — Phase 6 最小持久化
+
+### 设计决定
+
+- 下一项能力选择最小持久化，因为当前 Collection 进程结束后数据会消失；持久化比 ANN 更直接地延伸“数据库”目标，也能复用现有 Collection 不变量。
+- 文件使用 `WVDB` 魔数、版本号 1、维度、记录数和固定宽度 little-endian 数据；向量元素按 float 位模式写入，不走文本格式。
+- `save` 写出当前内存快照；`load` 先读取和校验文件，再通过 `insert_batch` 构造 Collection。
+- 当前不实现崩溃期间的原子替换、日志恢复、文件锁或并发写入，这些留作后续范围。
+
+### 实现与验证
+
+- 新增 `Collection::save(path)` 和 `Collection::load(path)`。
+- round-trip 测试确认维度、数量、ID、距离和搜索结果保持一致。
+- 测试错误魔数和截断文件；输出：`Phase 6 Collection persistence test passed`。
+- 手动 g++ C++20、警告开启编译通过；CMake Release preset 仍等待系统安装 Ninja。

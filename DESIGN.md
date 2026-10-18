@@ -1,8 +1,8 @@
 # WVectorDB Design
 
-- 版本：0.2.0
-- 对应规格：SPEC.md 0.2.0
-- 状态：Phase 5 MVP 复盘与下一阶段规划中
+- 版本：0.3.0
+- 对应规格：SPEC.md 0.3.0
+- 状态：Phase 6 最小持久化实现中
 
 本文描述可审查的设计和当前骨架边界。MVP 的 Collection 生命周期和精确搜索已经实现，Phase 5 负责复盘交付质量并决定下一项能力。
 
@@ -50,6 +50,8 @@
         std::vector<std::vector<SearchResult>> search_batch(
             const std::vector<Vector>& queries,
             std::size_t k) const;
+        void save(const std::filesystem::path& path) const;
+        static Collection load(const std::filesystem::path& path);
     };
 
 Phase 1 提供构造、dimension 和 size 的骨架接口。
@@ -68,6 +70,22 @@ Phase 2 已加入 insert 和 erase；Phase 3 加入 search。
 - 同一批次中的重复 ID 遵循单条覆盖规则，后出现的条目生效。
 - 该 MVP 设计以强异常安全和行为一致为优先，批量插入的复制成本集中在输入向量和受影响旧记录；完整 Collection 不再整体复制。
 - `search_batch` 逐个复用单条 `search`，返回结果下标与查询下标对应；查询对象是 const，因此失败不会改变 Collection。
+
+## 12. Phase 6 持久化格式
+
+持久化采用最小版本化二进制格式，字段按 little-endian 写入：
+
+```text
+4 bytes  magic = WVDB
+u32      format version = 1
+u64      dimension
+u64      record count
+repeat record count:
+    u64  VectorId
+    float[dimension] vector values
+```
+
+`save` 只负责写出当前快照，不承诺崩溃期间的原子替换。`load` 在构造 Collection 前读取并检查魔数、版本、维度、数量和向量值；文件中的重复 ID、截断数据和非法值都会被拒绝。浮点数通过固定宽度位模式写入，避免依赖文本格式的舍入差异。
 
 ## 4. 数据模型与删除策略
 

@@ -58,5 +58,5 @@ else()
 endif()
 
 enable_testing()
-add_test(NAME phase5_collection_batch_api COMMAND wvectordb_smoke)
+add_test(NAME phase6_collection_persistence COMMAND wvectordb_smoke)
 add_test(NAME phase5_basic_search_example COMMAND wvectordb_basic_search)

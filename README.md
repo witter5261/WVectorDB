@@ -2,7 +2,7 @@
 
 A minimal vector database built from scratch for learning AI engineering.
 
-当前仓库处于 **Phase 5：MVP 复盘与下一阶段规划**。Collection 生命周期、精确 top-k 搜索和排序 Benchmark 已完成，正在整理交付入口并选择下一项能力。
+当前仓库处于 **Phase 6：最小持久化**。Collection 生命周期、精确 top-k 搜索、批量 API 和 Benchmark 已完成，正在加入可测试的版本化文件保存与加载。
 
 ## 项目路线
 
@@ -38,7 +38,7 @@ Release 构建推荐使用 CMake Preset（需要 Ninja）：
 
 - GitHub：witter5261/WVectorDB
 - 分支：main
-- 当前阶段：Phase 5，MVP 复盘与下一阶段规划
+- 当前阶段：Phase 6，最小持久化
 - 基准程序：`benchmark/benchmark.cpp`
 - 最近结果：`benchmark/results/phase4_baseline.csv`（Phase 5 批量实验：`phase5_batch_insert.csv` 和 `phase5_batch_search.csv`）
 - 核心 MVP 实现：Collection 生命周期、精确 top-k 和 partial_sort 搜索已完成
@@ -49,6 +49,7 @@ Release 构建推荐使用 CMake Preset（需要 Ninja）：
 - 已加入 `search_batch`：结果顺序与查询顺序对应，复用单条搜索校验规则。
 - 批量 Benchmark 表明快照复制是小批次插入的瓶颈，当前已改为只备份受影响记录的回滚式实现。
 - `search_batch` 当前主要提供批量 API 便利，Benchmark 没有显示稳定加速。
+- `save/load` 使用带魔数和版本号的 little-endian 二进制格式；当前不承诺崩溃期间的原子替换。
 - CMake Preset 已加入 Release 配置；实际构建仍等待 Ninja。
 
 ## 当前设计结论

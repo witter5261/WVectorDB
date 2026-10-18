@@ -1,13 +1,74 @@
 #include "wvectordb/collection.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cassert>
+#include <bit>
 #include <cmath>
+#include <cstdint>
+#include <fstream>
 #include <limits>
 #include <stdexcept>
 #include <utility>
 
 namespace {
+
+constexpr std::array<char, 4> kFileMagic{'W', 'V', 'D', 'B'};
+constexpr std::uint32_t kFileVersion = 1;
+
+void write_u32_le(std::ostream& output, std::uint32_t value) {
+    for (std::size_t shift = 0; shift < 32; shift += 8) {
+        output.put(static_cast<char>((value >> shift) & 0xffU));
+    }
+    if (!output) {
+        throw std::runtime_error("failed to write Collection file");
+    }
+}
+
+void write_u64_le(std::ostream& output, std::uint64_t value) {
+    for (std::size_t shift = 0; shift < 64; shift += 8) {
+        output.put(static_cast<char>((value >> shift) & 0xffU));
+    }
+    if (!output) {
+        throw std::runtime_error("failed to write Collection file");
+    }
+}
+
+std::uint32_t read_u32_le(std::istream& input) {
+    std::uint32_t value = 0;
+    for (std::size_t shift = 0; shift < 32; shift += 8) {
+        const int byte = input.get();
+        if (byte == std::char_traits<char>::eof()) {
+            throw std::runtime_error("truncated Collection file");
+        }
+        value |= static_cast<std::uint32_t>(
+                     static_cast<unsigned char>(byte))
+                 << shift;
+    }
+    return value;
+}
+
+std::uint64_t read_u64_le(std::istream& input) {
+    std::uint64_t value = 0;
+    for (std::size_t shift = 0; shift < 64; shift += 8) {
+        const int byte = input.get();
+        if (byte == std::char_traits<char>::eof()) {
+            throw std::runtime_error("truncated Collection file");
+        }
+        value |= static_cast<std::uint64_t>(
+                     static_cast<unsigned char>(byte))
+                 << shift;
+    }
+    return value;
+}
+
+void write_float_le(std::ostream& output, float value) {
+    write_u32_le(output, std::bit_cast<std::uint32_t>(value));
+}
+
+float read_float_le(std::istream& input) {
+    return std::bit_cast<float>(read_u32_le(input));
+}
 
 float squared_l2_distance(const wvectordb::Vector& left,
                           const wvectordb::Vector& right) {
@@ -227,6 +288,78 @@ std::vector<std::vector<SearchResult>> Collection::search_batch(
         batch_results.push_back(search(query, k));
     }
     return batch_results;
+}
+
+void Collection::save(const std::filesystem::path& path) const {
+    std::ofstream output(path, std::ios::binary | std::ios::trunc);
+    if (!output) {
+        throw std::runtime_error("failed to open Collection file for writing");
+    }
+
+    for (const char byte : kFileMagic) {
+        output.put(byte);
+    }
+    if (!output) {
+        throw std::runtime_error("failed to write Collection file header");
+    }
+
+    write_u32_le(output, kFileVersion);
+    write_u64_le(output, static_cast<std::uint64_t>(dimension_));
+    write_u64_le(output, static_cast<std::uint64_t>(records_.size()));
+
+    for (const Record& record : records_) {
+        write_u64_le(output, record.id);
+        for (const float value : record.vector) {
+            write_float_le(output, value);
+        }
+    }
+}
+
+Collection Collection::load(const std::filesystem::path& path) {
+    std::ifstream input(path, std::ios::binary);
+    if (!input) {
+        throw std::runtime_error("failed to open Collection file for reading");
+    }
+
+    for (const char expected : kFileMagic) {
+        const int actual = input.get();
+        if (actual == std::char_traits<char>::eof() ||
+            static_cast<char>(actual) != expected) {
+            throw std::invalid_argument("invalid Collection file magic");
+        }
+    }
+
+    const std::uint32_t version = read_u32_le(input);
+    if (version != kFileVersion) {
+        throw std::invalid_argument("unsupported Collection file version");
+    }
+
+    const std::uint64_t dimension_value = read_u64_le(input);
+    const std::uint64_t count_value = read_u64_le(input);
+    if (dimension_value == 0 ||
+        dimension_value > std::numeric_limits<std::size_t>::max() ||
+        count_value > std::numeric_limits<std::size_t>::max()) {
+        throw std::invalid_argument("invalid Collection file dimensions");
+    }
+
+    Collection collection(static_cast<std::size_t>(dimension_value));
+    const std::size_t expected_count = static_cast<std::size_t>(count_value);
+    std::vector<VectorEntry> entries;
+    entries.reserve(expected_count);
+    for (std::size_t index = 0; index < expected_count; ++index) {
+        Vector vector(collection.dimension());
+        const VectorId id = read_u64_le(input);
+        for (float& value : vector) {
+            value = read_float_le(input);
+        }
+        entries.push_back(VectorEntry{id, std::move(vector)});
+    }
+
+    collection.insert_batch(entries);
+    if (collection.size() != expected_count) {
+        throw std::invalid_argument("duplicate ID in Collection file");
+    }
+    return collection;
 }
 
 void Collection::validate_vector(const Vector& vector) const {
